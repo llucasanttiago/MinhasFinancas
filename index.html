@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Minhas Contas">
+<meta name="theme-color" content="#f2f4f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1513" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Minhas Contas</title>
+<style>
+:root{
+  /* Uma coluna de celular. Abas embaixo: Resumo, Entradas, Saídas, Cartão, Mais. Formulários sobem de baixo. */
+  --bg:#f2f4f3; --card:#ffffff; --ink:#141c18; --muted:#5e6c65; --line:#dde4e0;
+  --accent:#1f5c48; --accent-ink:#ffffff; --soft:#e1eee8;
+  --in:#13804c; --out:#c23d29; --warn:#a96400;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --round: ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0f1513; --card:#18211d; --ink:#e7efea; --muted:#96a59d; --line:#2a3631;
+    --accent:#74d1a5; --accent-ink:#082015; --soft:#1e3a2f; --in:#63d597; --out:#ff8c76; --warn:#f0b34a; color-scheme:dark; }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.4}
+body{padding:env(safe-area-inset-top) 0 0}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+main{max-width:560px;margin:0 auto;padding:12px 16px calc(96px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0 12px}
+header h1{font-family:var(--round);font-size:1.5rem;margin:0}
+.mnav{display:flex;align-items:center;gap:2px}
+.mnav button{width:36px;height:36px;border-radius:50%;border:0;background:var(--card);font-size:1.2rem}
+.mnav span{min-width:118px;text-align:center;font-weight:600;font-size:.95rem}
+
+.hero{background:var(--accent);color:var(--accent-ink);border-radius:20px;padding:18px;display:grid;gap:4px;margin-bottom:14px}
+.hero small{opacity:.85}
+.hero b{font-family:var(--round);font-size:2.2rem;line-height:1.1}
+.hero .note{font-size:.88rem;opacity:.9;margin-top:6px}
+
+.card{background:var(--card);border-radius:16px;padding:4px 16px;margin-bottom:14px}
+.card h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:12px 0 4px;font-weight:600}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);min-height:52px}
+.row:first-of-type{border-top:0}
+.row .l{min-width:0;flex:1}
+.row .t{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .s{font-size:.82rem;color:var(--muted)}
+.row .v{font-weight:600;white-space:nowrap}
+.in{color:var(--in)} .out{color:var(--out)} .warn{color:var(--warn)} .muted{color:var(--muted)}
+.row.tap{width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;padding-left:0;padding-right:0}
+.row.total .t,.row.total .v{font-weight:700}
+.empty{color:var(--muted);padding:14px 0;font-size:.93rem}
+
+.chk{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);background:none;flex:none;display:grid;place-items:center;font-size:.9rem;color:transparent}
+.chk[aria-pressed="true"]{background:var(--in);border-color:var(--in);color:#fff}
+.paid .t{color:var(--muted);text-decoration:line-through}
+
+.bars{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end;height:120px;padding:10px 0 4px}
+.bars div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;font-size:.7rem;color:var(--muted)}
+.bars i{display:block;width:100%;max-width:34px;background:var(--muted);opacity:.45;border-radius:6px 6px 2px 2px}
+.bars .cur i{background:var(--accent);opacity:1}
+.bars b{font-weight:600;color:var(--ink);font-size:.68rem}
+
+.btns{display:flex;gap:10px;margin-bottom:14px}
+.btn{flex:1;border:0;border-radius:14px;padding:13px;font-weight:600;background:var(--card)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--out)}
+.btn.armed{background:var(--out);color:#fff}
+.hint{font-size:.85rem;color:var(--muted);margin:-4px 2px 14px}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:5}
+nav.tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.7rem;color:var(--muted);padding:4px 0}
+nav.tabs svg{width:24px;height:24px}
+nav.tabs button[aria-current="page"]{color:var(--accent)}
+
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.scrim[hidden]{display:none}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:92%;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom));display:grid;gap:12px}
+.sheet h3{margin:0;font-family:var(--round);font-size:1.25rem}
+.sheet label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:4px;font-weight:500}
+.sheet input:not([type=checkbox]),.sheet select{width:100%;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px;font-size:16px}
+.sheet .big{font-family:var(--round);font-size:1.7rem;font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:.92rem}
+.check input{width:22px;height:22px;margin:0;flex:none}
+.err{color:var(--out);font-size:.88rem;min-height:1em}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;font-size:.9rem;z-index:20;max-width:calc(100% - 32px)}
+.toast[hidden]{display:none}
+.grupo summary{list-style:none;cursor:pointer}.grupo summary::-webkit-details-marker{display:none}.grupo[open] summary .s{color:var(--accent)}.grupo > div.row{padding-left:12px}
+.file{display:block;text-align:center;border:1.5px dashed var(--accent);color:var(--accent);border-radius:14px;padding:14px;font-weight:600}
+.file input{position:absolute;opacity:0;width:1px;height:1px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<nav class="tabs" id="tabs" aria-label="Seções">
+  <button data-tab="resumo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 13h4v7H4zM10 8h4v12h-4zM16 4h4v16h-4z"/></svg>Resumo</button>
+  <button data-tab="entradas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"/></svg>Entradas</button>
+  <button data-tab="saidas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20V8M6 14l6-6 6 6M4 4h16"/></svg>Saídas</button>
+  <button data-tab="cartao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h4"/></svg>Cartão</button>
+  <button data-tab="mais"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Mais</button>
+</nav>
+
+<div class="scrim" id="scrim" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+'use strict';
+/* ============ utilidades ============ */
+const $ = s => document.querySelector(s);
+const BRL = new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'});
+const fmt = v => BRL.format(Math.round(v * 100) / 100);
+const pad = n => String(n).padStart(2, '0');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const hoje = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+function addM(ym, n){ let [y, m] = ym.split('-').map(Number); m += n; while(m > 12){ m -= 12; y++; } while(m < 1){ m += 12; y--; } return y + '-' + pad(m); }
+function diffM(a, b){ const [y1, m1] = a.split('-').map(Number), [y2, m2] = b.split('-').map(Number); return (y2 - y1) * 12 + (m2 - m1); }
+function nomeMes(ym, curto){ const [y, m] = ym.split('-').map(Number); const d = new Date(y, m - 1, 1);
+  return curto ? d.toLocaleDateString('pt-BR', {month:'short'}).replace('.', '') : d.toLocaleDateString('pt-BR', {month:'long', year:'numeric'}); }
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+function dataCurta(ds){ const [y, m, d] = ds.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('pt-BR', {day:'2-digit', month:'short'}).replace('.', ''); }
+function num(s){
+  s = String(s ?? '').trim().replace(/[R$\s]/g, '');
+  if(!s) return NaN;
+  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');
+  if(c > -1 && p > -1) s = c > p ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+  else if(c > -1) s = s.replace(',', '.');
+  return Number(s);
+}
+const r2 = v => Math.round(v * 100) / 100;
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3000); }
+
+/* ============ dados ============ */
+const CHAVE = 'minhas-contas-v1';
+const CAT_ENTRADA = ['Salário', 'Keeta', 'Extra', 'Bico', 'Reembolso', 'Outros'];
+const CAT_SAIDA = ['Comida e mercado', 'Combustível', 'Moto (manutenção)', 'Casa', 'Saúde', 'Lazer', 'Pix para pessoas', 'Repasse a terceiros', 'Outros'];
+function vazio(){ return { v:1, entradas:[], saidas:[], fixas:[], pagas:{}, cartao:{ compras:[], faturas:{}, pagas:{} }, config:{ fechamento:1, vencimento:8 } }; }
+let S = vazio();
+function carregar(){
+  try { const raw = localStorage.getItem(CHAVE); if(raw) S = normalizar(JSON.parse(raw)); }
+  catch(e){ toast('Não consegui ler os dados salvos.'); }
+}
+function normalizar(d){
+  const base = vazio();
+  const out = Object.assign(base, d || {});
+  out.cartao = Object.assign(vazio().cartao, (d && d.cartao) || {});
+  out.config = Object.assign(vazio().config, (d && d.config) || {});
+  ['entradas', 'saidas', 'fixas'].forEach(k => { if(!Array.isArray(out[k])) out[k] = []; });
+  return out;
+}
+function salvar(){
+  try { localStorage.setItem(CHAVE, JSON.stringify(S)); }
+  catch(e){ toast('Não deu para salvar. Faça um backup em Mais.'); }
+}
+
+/* ============ cálculos ============ */
+function fixasDoMes(ym){
+  return S.fixas.filter(f => {
+    if(f.ativo === false) return false;
+    const ini = f.inicio || '2000-01';
+    if(diffM(ini, ym) < 0) return false;
+    if(f.parcelas && diffM(ini, ym) >= f.parcelas) return false;
+    return true;
+  }).map(f => {
+    const k = f.parcelas ? diffM(f.inicio, ym) + 1 : null;
+    return { ...f, k, pago: !!S.pagas[f.id + '|' + ym] };
+  }).sort((a, b) => (a.dia || 99) - (b.dia || 99));
+}
+function mesDaPrimeiraParcela(dataCompra){
+  const [y, m, d] = dataCompra.split('-').map(Number);
+  const ym = y + '-' + pad(m);
+  return d >= (S.config.fechamento || 1) ? addM(ym, 1) : ym;
+}
+function linhasFatura(ym){
+  const linhas = [];
+  const imp = S.cartao.faturas[ym];
+  if(imp) imp.linhas.forEach((l, i) => linhas.push({ desc:l.desc, valor:l.valor, origem:'importado', idx:i }));
+  S.cartao.compras.forEach(c => {
+    const k = diffM(c.primeira, ym) + 1;
+    if(k >= 1 && k <= c.parcelas) linhas.push({ desc:c.desc + (c.parcelas > 1 ? ` (${k}/${c.parcelas})` : ''), valor:c.valorParcela, origem:'manual', id:c.id });
+  });
+  return linhas;
+}
+const totalFatura = ym => r2(linhasFatura(ym).reduce((s, l) => s + l.valor, 0));
+function balanco(ym){
+  const ent = S.entradas.filter(e => e.d.slice(0, 7) === ym);
+  const sai = S.saidas.filter(s => s.d.slice(0, 7) === ym);
+  const proprias = r2(ent.filter(e => !e.terceiros).reduce((s, e) => s + e.valor, 0));
+  const terceirosIn = r2(ent.filter(e => e.terceiros).reduce((s, e) => s + e.valor, 0));
+  const repasses = r2(sai.filter(s => s.cat === 'Repasse a terceiros').reduce((s, e) => s + e.valor, 0));
+  const avulsas = r2(sai.filter(s => s.cat !== 'Repasse a terceiros').reduce((s, e) => s + e.valor, 0));
+  const fx = fixasDoMes(ym);
+  const fixas = r2(fx.reduce((s, f) => s + f.valor, 0));
+  const fixasPagas = r2(fx.filter(f => f.pago).reduce((s, f) => s + f.valor, 0));
+  const fatura = totalFatura(ym);
+  const faturaPaga = !!S.cartao.pagas[ym];
+  const saldo = r2(proprias - avulsas - fixas - fatura);
+  const falta = r2((fixas - fixasPagas) + (faturaPaga ? 0 : fatura));
+  return { proprias, terceirosIn, repasses, avulsas, fixas, fixasPagas, nFixas:fx.length, nPagas:fx.filter(f => f.pago).length, fatura, faturaPaga, saldo, falta };
+}
+
+/* ============ navegação ============ */
+let aba = 'resumo';
+let mes = hoje().slice(0, 7);
+function irPara(t){ aba = t; render(); window.scrollTo(0, 0); }
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if(b) irPara(b.dataset.tab); });
+function cabecalho(titulo, comMes = true){
+  return `<header><h1>${titulo}</h1>${comMes ? `<div class="mnav"><button data-m="-1" aria-label="Mês anterior">‹</button><span class="num">${esc(cap(nomeMes(mes)))}</span><button data-m="1" aria-label="Próximo mês">›</button></div>` : ''}</header>`;
+}
+$('#app').addEventListener('click', e => {
+  const m = e.target.closest('[data-m]'); if(m){ mes = addM(mes, Number(m.dataset.m)); render(); return; }
+  const a = e.target.closest('[data-act]'); if(a) acoes[a.dataset.act](a.dataset.id, a);
+});
+
+/* ============ telas ============ */
+function render(){
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === aba ? 'page' : 'false'));
+  $('#app').innerHTML = ({ resumo:telaResumo, entradas:telaEntradas, saidas:telaSaidas, cartao:telaCartao, mais:telaMais })[aba]();
+}
+
+function telaResumo(){
+  const b = balanco(mes);
+  const vazioTudo = !S.entradas.length && !S.saidas.length && !S.fixas.length && !Object.keys(S.cartao.faturas).length && !S.cartao.compras.length;
+  const prox = [...Array(6)].map((_, i) => addM(mes, i));
+  const vals = prox.map(totalFatura); const max = Math.max(1, ...vals);
+  const aRepassar = r2(b.terceirosIn - b.repasses);
+  return cabecalho('Resumo') + `
+  <section class="hero" aria-label="Saldo do mês">
+    <small>${b.saldo >= 0 ? 'Sobra prevista no mês' : 'Falta no mês'}</small>
+    <b class="num">${fmt(Math.abs(b.saldo))}</b>
+    <div class="note num">Ainda falta pagar ${fmt(b.falta)} este mês</div>
+  </section>
+  ${vazioTudo ? `<p class="hint">Comece em <b>Mais</b>: importe seu arquivo de dados ou as faturas do Nubank (OFX). Depois registre cada dinheiro que entrar em <b>Entradas</b>.</p>` : ''}
+  <div class="card">
+    <h2>Balanço de ${esc(nomeMes(mes, true))}</h2>
+    <div class="row"><div class="l"><div class="t">Entrou</div><div class="s">seu dinheiro</div></div><div class="v num in">+ ${fmt(b.proprias)}</div></div>
+    <div class="row"><div class="l"><div class="t">Contas fixas</div><div class="s">${b.nPagas} de ${b.nFixas} pagas</div></div><div class="v num out">− ${fmt(b.fixas)}</div></div>
+    <div class="row"><div class="l"><div class="t">Fatura do cartão</div><div class="s">${b.faturaPaga ? 'paga' : 'vence dia ' + (S.config.vencimento || 8)}</div></div><div class="v num out">− ${fmt(b.fatura)}</div></div>
+    <div class="row"><div class="l"><div class="t">Outras saídas</div><div class="s">comida, combustível, Pix…</div></div><div class="v num out">− ${fmt(b.avulsas)}</div></div>
+    <div class="row total"><div class="l"><div class="t">${b.saldo >= 0 ? 'Sobra' : 'Falta'}</div></div><div class="v num ${b.saldo >= 0 ? 'in' : 'out'}">${b.saldo >= 0 ? '+' : '−'} ${fmt(Math.abs(b.saldo))}</div></div>
+  </div>
+  ${b.terceirosIn || b.repasses ? `<div class="card"><h2>Dinheiro de outras pessoas</h2>
+    <div class="row"><div class="l"><div class="t">Recebido</div><div class="s">ex.: aluguel do seu pai</div></div><div class="v num">${fmt(b.terceirosIn)}</div></div>
+    <div class="row"><div class="l"><div class="t">Repassado</div></div><div class="v num">${fmt(b.repasses)}</div></div>
+    <div class="row total"><div class="l"><div class="t">Falta repassar</div></div><div class="v num ${aRepassar > 0.009 ? 'warn' : 'in'}">${fmt(Math.max(0, aRepassar))}</div></div></div>` : ''}
+  <div class="card">
+    <h2>Próximas faturas do cartão</h2>
+    <div class="bars" role="img" aria-label="Valor das próximas 6 faturas">${prox.map((ym, i) => `<div class="${i === 0 ? 'cur' : ''}"><b class="num">${vals[i] ? Math.round(vals[i]).toLocaleString('pt-BR') : '0'}</b><i style="height:${Math.max(2, vals[i] / max * 80)}px"></i>${esc(nomeMes(ym, true))}</div>`).join('')}</div>
+  </div>`;
+}
+
+function listaMovs(lista, tipo){
+  if(!lista.length) return `<div class="empty">Nada registrado neste mês.</div>`;
+  return lista.slice().sort((a, b) => b.d.localeCompare(a.d)).map(m => `
+    <button class="row tap" data-act="${tipo === 'e' ? 'editEntrada' : 'editSaida'}" data-id="${m.id}">
+      <div class="l"><div class="t">${esc(m.desc || m.cat)}</div><div class="s">${esc(dataCurta(m.d))} · ${esc(m.cat)}${m.terceiros ? ' · de outra pessoa' : ''}</div></div>
+      <div class="v num ${tipo === 'e' ? (m.terceiros ? 'muted' : 'in') : (m.cat === 'Repasse a terceiros' ? 'muted' : 'out')}">${tipo === 'e' ? '+' : '−'} ${fmt(m.valor)}</div>
+    </button>`).join('');
+}
+function telaEntradas(){
+  const l = S.entradas.filter(e => e.d.slice(0, 7) === mes);
+  const tot = r2(l.filter(e => !e.terceiros).reduce((s, e) => s + e.valor, 0));
+  return cabecalho('Entradas') + `
+  <div class="btns"><button class="btn primary" data-act="novaEntrada">+ Registrar entrada</button></div>
+  <div class="card"><h2>Seu dinheiro no mês: <span class="num in">${fmt(tot)}</span></h2>${listaMovs(l, 'e')}</div>`;
+}
+function telaSaidas(){
+  const fx = fixasDoMes(mes);
+  const l = S.saidas.filter(s => s.d.slice(0, 7) === mes);
+  return cabecalho('Saídas') + `
+  <div class="btns"><button class="btn primary" data-act="novaSaida">+ Registrar saída</button><button class="btn" data-act="novaFixa">+ Conta fixa</button></div>
+  <p class="hint">Contas fixas: toque no círculo quando pagar. Não registre de novo em "Outras saídas".</p>
+  <div class="card"><h2>Contas fixas · ${fmt(fx.reduce((s, f) => s + f.valor, 0))}</h2>
+    ${fx.length ? fx.map(f => `<div class="row ${f.pago ? 'paid' : ''}">
+      <button class="chk" data-act="pagarFixa" data-id="${f.id}" aria-pressed="${f.pago}" aria-label="Marcar ${esc(f.nome)} como paga">✓</button>
+      <button class="l" data-act="editFixa" data-id="${f.id}" style="background:none;border:0;text-align:left;padding:0">
+        <div class="t">${esc(f.nome)}</div><div class="s">${f.dia ? 'dia ' + f.dia : 'sem dia'}${f.k ? ` · parcela ${f.k} de ${f.parcelas}` : ''}</div></button>
+      <div class="v num">${fmt(f.valor)}</div></div>`).join('') : `<div class="empty">Nenhuma conta fixa. Toque em "+ Conta fixa".</div>`}
+  </div>
+  <div class="card"><h2>Outras saídas · ${fmt(l.reduce((s, x) => s + x.valor, 0))}</h2>${listaMovs(l, 's')}</div>`;
+}
+function telaCartao(){
+  const linhas = linhasFatura(mes);
+  const tot = totalFatura(mes);
+  const paga = !!S.cartao.pagas[mes];
+  const imp = S.cartao.faturas[mes];
+  const ehPix = l => l.origem === 'importado' && /^pix no cr/i.test(l.desc);
+  const pix = linhas.filter(ehPix), outras = linhas.filter(l => !ehPix(l));
+  const linhaHTML = l => `<${l.origem === 'manual' ? `button class="row tap" data-act="editCompra" data-id="${l.id}"` : 'div class="row"'}>
+      <div class="l"><div class="t">${esc(l.origem === 'importado' ? l.desc.replace(/^pix no cr[ée]dito - /i, '') : l.desc)}</div><div class="s">${l.origem === 'manual' ? 'você registrou' : 'da fatura do banco'}</div></div>
+      <div class="v num ${l.valor < 0 ? 'in' : ''}">${l.valor < 0 ? '+ ' + fmt(-l.valor) : fmt(l.valor)}</div></${l.origem === 'manual' ? 'button' : 'div'}>`;
+  const prox = [...Array(12)].map((_, i) => addM(mes, i + 1)).map(ym => [ym, totalFatura(ym)]).filter(x => x[1]);
+  return cabecalho('Cartão') + `
+  <section class="hero"><small>Fatura de ${esc(nomeMes(mes, true))} · vence dia ${S.config.vencimento || 8}</small><b class="num">${fmt(tot)}</b>
+    <div class="note">${paga ? 'Paga' : 'Ainda não paga'}${imp ? ' · importada em ' + esc(dataCurta(imp.importado)) : ''}</div></section>
+  <div class="btns"><button class="btn primary" data-act="novaCompra">+ Compra no cartão</button><button class="btn" data-act="pagarFatura">${paga ? 'Desmarcar paga' : 'Marcar paga'}</button></div>
+  <div class="card"><h2>${linhas.length} lançamentos</h2>
+    ${pix.length ? `<details class="grupo"><summary class="row"><div class="l"><div class="t">Pix no crédito</div><div class="s">${pix.length} parcelas · toque para ver</div></div><div class="v num">${fmt(pix.reduce((s, l) => s + l.valor, 0))}</div></summary>${pix.sort((a, b) => b.valor - a.valor).map(linhaHTML).join('')}</details>` : ''}
+    ${outras.length ? outras.sort((a, b) => b.valor - a.valor).map(linhaHTML).join('') : (pix.length ? '' : `<div class="empty">Nada nesta fatura.</div>`)}
+  </div>
+  ${prox.length ? `<div class="card"><h2>Já contratado nos próximos meses</h2>${prox.map(([ym, v]) => `<div class="row"><div class="l"><div class="t">${esc(cap(nomeMes(ym)))}</div></div><div class="v num">${fmt(v)}</div></div>`).join('')}
+    <div class="row total"><div class="l"><div class="t">Total</div></div><div class="v num">${fmt(prox.reduce((s, x) => s + x[1], 0))}</div></div></div>` : ''}`;
+}
+function telaMais(){
+  return cabecalho('Mais', false) + `
+  <div class="card"><h2>Cartão</h2>
+    <div class="row"><div class="l"><div class="t">Fechamento da fatura</div><div class="s">compras a partir deste dia vão para a fatura seguinte</div></div><div class="v">dia <input id="cfg-fech" inputmode="numeric" value="${S.config.fechamento}" style="width:48px;border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--bg);text-align:center"></div></div>
+    <div class="row"><div class="l"><div class="t">Vencimento</div></div><div class="v">dia <input id="cfg-venc" inputmode="numeric" value="${S.config.vencimento}" style="width:48px;border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--bg);text-align:center"></div></div>
+  </div>
+  <label class="file" style="margin-bottom:10px">Importar faturas do Nubank (.ofx)<input type="file" id="f-ofx" accept=".ofx,application/x-ofx,text/plain" multiple></label>
+  <p class="hint">No app do Nubank, peça as faturas em OFX e importe aqui. Cada arquivo substitui a fatura daquele mês, então pode importar de novo quando quiser atualizar.</p>
+  <div class="btns"><button class="btn" data-act="exportar">Fazer backup</button></div>
+  <label class="file" style="margin-bottom:10px">Restaurar backup (.json)<input type="file" id="f-json" accept=".json,application/json"></label>
+  <p class="hint">Seus dados ficam só neste iPhone. Faça backup toda semana e guarde no app Arquivos. Se você apagar o app da tela, os dados podem ser perdidos.</p>
+  <div class="btns"><button class="btn danger" data-act="apagarTudo">Apagar todos os dados</button></div>`;
+}
+document.addEventListener('change', async e => {
+  if(e.target.id === 'cfg-fech' || e.target.id === 'cfg-venc'){
+    const v = Math.min(31, Math.max(1, parseInt(e.target.value, 10) || 1));
+    S.config[e.target.id === 'cfg-fech' ? 'fechamento' : 'vencimento'] = v; salvar(); toast('Salvo.');
+  }
+  if(e.target.id === 'f-ofx') importarOFX([...e.target.files]);
+  if(e.target.id === 'f-json' && e.target.files[0]) restaurar(e.target.files[0]);
+});
+
+/* ============ folhas (formulários) ============ */
+function abrir(html){ $('#sheet').innerHTML = html; $('#scrim').hidden = false; }
+function fechar(){ $('#scrim').hidden = true; $('#sheet').innerHTML = ''; }
+$('#scrim').addEventListener('click', e => { if(e.target.id === 'scrim') fechar(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#scrim').hidden) fechar(); });
+const opts = (lista, sel) => lista.map(c => `<option ${c === sel ? 'selected' : ''}>${esc(c)}</option>`).join('');
+function botoes(temExcluir){ return `<div class="err" id="f-err" role="alert"></div><div class="btns" style="margin:0">${temExcluir ? '<button type="button" class="btn danger" id="f-del">Excluir</button>' : '<button type="button" class="btn" id="f-cancel">Cancelar</button>'}<button type="submit" class="btn primary">Salvar</button></div>`; }
+function ligarBotoes(onDel){
+  if($('#f-cancel')) $('#f-cancel').onclick = fechar;
+  if($('#f-del')){ let armado = false; $('#f-del').onclick = () => {
+    if(!armado){ armado = true; $('#f-del').classList.add('armed'); $('#f-del').textContent = 'Toque de novo'; return; }
+    onDel(); salvar(); fechar(); render(); toast('Excluído.'); }; }
+}
+function lerValor(id){ const v = num($(id).value); if(!(v > 0)){ $('#f-err').textContent = 'Digite um valor maior que zero.'; return null; } return r2(v); }
+function dataPadrao(){ return mes === hoje().slice(0, 7) ? hoje() : mes + '-01'; }
+
+function formMov(tipo, item){
+  const ehE = tipo === 'e';
+  const m = item || { id:uid(), d:dataPadrao(), valor:0, desc:'', cat: ehE ? 'Salário' : 'Comida e mercado', terceiros:false };
+  abrir(`<h3>${item ? 'Editar' : 'Nova'} ${ehE ? 'entrada' : 'saída'}</h3>
+  <form id="f" novalidate style="display:grid;gap:12px">
+    <div><label for="f-v">Valor (R$)</label><input id="f-v" class="big" inputmode="decimal" placeholder="0,00" value="${m.valor ? m.valor.toFixed(2).replace('.', ',') : ''}"></div>
+    <div><label for="f-desc">Descrição</label><input id="f-desc" placeholder="${ehE ? 'Ex.: salário Vanti, semana Keeta' : 'Ex.: mercado, gasolina'}" value="${esc(m.desc)}"></div>
+    <div class="two"><div><label for="f-cat">Categoria</label><select id="f-cat">${opts(ehE ? CAT_ENTRADA : CAT_SAIDA, m.cat)}</select></div>
+    <div><label for="f-d">Data</label><input id="f-d" type="date" value="${m.d}"></div></div>
+    ${ehE ? `<label class="check" for="f-terc"><input type="checkbox" id="f-terc" ${m.terceiros ? 'checked' : ''}><span>É dinheiro de outra pessoa (ex.: aluguel do meu pai). Não entra no meu saldo.</span></label>` : ''}
+    ${botoes(!!item)}
+  </form>`);
+  ligarBotoes(() => { const arr = ehE ? S.entradas : S.saidas; const i = arr.findIndex(x => x.id === m.id); if(i > -1) arr.splice(i, 1); });
+  $('#f').onsubmit = ev => {
+    ev.preventDefault();
+    const valor = lerValor('#f-v'); if(valor === null) return;
+    const d = $('#f-d').value; if(!d){ $('#f-err').textContent = 'Escolha a data.'; return; }
+    const novo = { id:m.id, d, valor, desc:$('#f-desc').value.trim(), cat:$('#f-cat').value };
+    if(ehE) novo.terceiros = $('#f-terc').checked;
+    const arr = ehE ? S.entradas : S.saidas; const i = arr.findIndex(x => x.id === m.id);
+    if(i > -1) arr[i] = novo; else arr.push(novo);
+    mes = d.slice(0, 7); salvar(); fechar(); render(); toast('Salvo.');
+  };
+}
+function formFixa(item){
+  const f = item || { id:uid(), nome:'', valor:0, dia:'', inicio:mes, parcelas:'' };
+  abrir(`<h3>${item ? 'Editar' : 'Nova'} conta fixa</h3>
+  <form id="f" novalidate style="display:grid;gap:12px">
+    <div><label for="f-nome">Nome</label><input id="f-nome" placeholder="Ex.: Vivo internet" value="${esc(f.nome)}"></div>
+    <div class="two"><div><label for="f-v">Valor por mês (R$)</label><input id="f-v" inputmode="decimal" value="${f.valor ? f.valor.toFixed(2).replace('.', ',') : ''}"></div>
+    <div><label for="f-dia">Dia do vencimento</label><input id="f-dia" inputmode="numeric" value="${f.dia || ''}"></div></div>
+    <div class="two"><div><label for="f-ini">Começa em</label><input id="f-ini" type="month" value="${f.inicio}"></div>
+    <div><label for="f-par">Nº de parcelas</label><input id="f-par" inputmode="numeric" placeholder="vazio = sem fim" value="${f.parcelas || ''}"></div></div>
+    <p class="hint" style="margin:0">Para financiamento ou empréstimo, coloque em "Começa em" o mês da próxima parcela e quantas faltam.</p>
+    ${botoes(!!item)}
+  </form>`);
+  ligarBotoes(() => { S.fixas = S.fixas.filter(x => x.id !== f.id); });
+  $('#f').onsubmit = ev => {
+    ev.preventDefault();
+    const nome = $('#f-nome').value.trim(); if(!nome){ $('#f-err').textContent = 'Dê um nome para a conta.'; return; }
+    const valor = lerValor('#f-v'); if(valor === null) return;
+    const novo = { id:f.id, nome, valor, dia:parseInt($('#f-dia').value, 10) || null, inicio:$('#f-ini').value || mes, parcelas:parseInt($('#f-par').value, 10) || null, ativo:true };
+    const i = S.fixas.findIndex(x => x.id === f.id); if(i > -1) S.fixas[i] = novo; else S.fixas.push(novo);
+    salvar(); fechar(); render(); toast('Conta salva.');
+  };
+}
+function formCompra(item){
+  const c = item || { id:uid(), d:hoje(), desc:'', valorParcela:0, parcelas:1 };
+  abrir(`<h3>${item ? 'Editar' : 'Nova'} compra no cartão</h3>
+  <form id="f" novalidate style="display:grid;gap:12px">
+    <div><label for="f-desc">O que foi</label><input id="f-desc" placeholder="Ex.: pneu da moto" value="${esc(c.desc)}"></div>
+    <div class="two"><div><label for="f-v">Valor de cada parcela (R$)</label><input id="f-v" inputmode="decimal" value="${c.valorParcela ? c.valorParcela.toFixed(2).replace('.', ',') : ''}"></div>
+    <div><label for="f-par">Parcelas</label><input id="f-par" inputmode="numeric" value="${c.parcelas}"></div></div>
+    <div><label for="f-d">Data da compra</label><input id="f-d" type="date" value="${c.d}"></div>
+    <p class="hint" style="margin:0" id="f-info"></p>
+    ${botoes(!!item)}
+  </form>`);
+  const info = () => { const d = $('#f-d').value; const v = num($('#f-v').value), p = parseInt($('#f-par').value, 10) || 1;
+    $('#f-info').textContent = d ? `Primeira parcela na fatura de ${nomeMes(mesDaPrimeiraParcela(d))}${v > 0 ? ` · total ${fmt(v * p)}` : ''}.` : ''; };
+  ['#f-d', '#f-v', '#f-par'].forEach(s => $(s).addEventListener('input', info)); info();
+  ligarBotoes(() => { S.cartao.compras = S.cartao.compras.filter(x => x.id !== c.id); });
+  $('#f').onsubmit = ev => {
+    ev.preventDefault();
+    const valor = lerValor('#f-v'); if(valor === null) return;
+    const d = $('#f-d').value; if(!d){ $('#f-err').textContent = 'Escolha a data.'; return; }
+    const parcelas = Math.max(1, parseInt($('#f-par').value, 10) || 1);
+    const novo = { id:c.id, d, desc:$('#f-desc').value.trim() || 'Compra', valorParcela:valor, parcelas, primeira:mesDaPrimeiraParcela(d) };
+    const i = S.cartao.compras.findIndex(x => x.id === c.id); if(i > -1) S.cartao.compras[i] = novo; else S.cartao.compras.push(novo);
+    mes = novo.primeira; salvar(); fechar(); render(); toast('Compra salva na fatura de ' + nomeMes(novo.primeira, true) + '.');
+  };
+}
+
+/* ============ ações ============ */
+const acoes = {
+  novaEntrada: () => formMov('e'),
+  novaSaida: () => formMov('s'),
+  editEntrada: id => formMov('e', S.entradas.find(x => x.id === id)),
+  editSaida: id => formMov('s', S.saidas.find(x => x.id === id)),
+  novaFixa: () => formFixa(),
+  editFixa: id => formFixa(S.fixas.find(x => x.id === id)),
+  pagarFixa: id => { const k = id + '|' + mes; if(S.pagas[k]) delete S.pagas[k]; else S.pagas[k] = hoje(); salvar(); render(); },
+  novaCompra: () => formCompra(),
+  editCompra: id => formCompra(S.cartao.compras.find(x => x.id === id)),
+  pagarFatura: () => { if(S.cartao.pagas[mes]) delete S.cartao.pagas[mes]; else S.cartao.pagas[mes] = hoje(); salvar(); render(); },
+  exportar: exportar,
+  apagarTudo: (id, btn) => {
+    if(!btn.classList.contains('armed')){ btn.classList.add('armed'); btn.textContent = 'Toque de novo para apagar tudo'; return; }
+    S = vazio(); salvar(); render(); toast('Tudo apagado.');
+  }
+};
+
+/* ============ backup e importação ============ */
+async function exportar(){
+  const nome = 'minhas-contas-backup-' + hoje() + '.json';
+  const blob = new Blob([JSON.stringify(S, null, 1)], {type:'application/json'});
+  try {
+    const file = new File([blob], nome, {type:'application/json'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:nome}); return; }
+  } catch(e){ if(e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+async function restaurar(file){
+  try {
+    const d = JSON.parse(await file.text());
+    if(!d || typeof d !== 'object' || !('entradas' in d || 'fixas' in d || 'cartao' in d)) throw new Error();
+    S = normalizar(d); salvar(); aba = 'resumo'; render(); toast('Dados restaurados.');
+  } catch(e){ toast('Este arquivo não é um backup do Minhas Contas.'); }
+}
+function decodificar(buf){ try { return new TextDecoder('utf-8', {fatal:true}).decode(buf); } catch(e){ return new TextDecoder('windows-1252').decode(buf); } }
+function lerOFX(txt){
+  const blocos = txt.match(/<STMTTRN>[\s\S]*?(?=<\/STMTTRN>|<STMTTRN>|<\/BANKTRANLIST>)/gi) || [];
+  const tag = (b, t) => { const m = new RegExp('<' + t + '>([^<\\r\\n]*)', 'i').exec(b); return m ? m[1].trim() : ''; };
+  const linhas = [];
+  blocos.forEach(b => {
+    const amt = num(tag(b, 'TRNAMT')); const desc = tag(b, 'MEMO') || tag(b, 'NAME');
+    if(!isFinite(amt) || amt === 0) return;
+    if(amt > 0 && /pagamento/i.test(desc)) return; // pagamento da fatura anterior
+    linhas.push({ desc, valor: r2(-amt) });
+  });
+  let m = /<DTEND>(\d{4})(\d{2})/i.exec(txt);
+  let ym = m ? m[1] + '-' + m[2] : null;
+  if(!ym){ const datas = blocos.map(b => tag(b, 'DTPOSTED').slice(0, 6)).filter(Boolean).sort(); if(datas.length){ const u = datas.pop(); ym = addM(u.slice(0, 4) + '-' + u.slice(4, 6), 1); } }
+  return { ym, linhas };
+}
+async function importarOFX(files){
+  let ok = 0; const meses = [];
+  for(const f of files){
+    try {
+      const { ym, linhas } = lerOFX(decodificar(await f.arrayBuffer()));
+      if(!ym || !linhas.length) continue;
+      S.cartao.faturas[ym] = { importado:hoje(), arquivo:f.name, linhas }; ok++; meses.push(ym);
+    } catch(e){}
+  }
+  if(!ok){ toast('Não encontrei faturas nesses arquivos.'); return; }
+  salvar(); meses.sort(); mes = meses[0]; aba = 'cartao'; render();
+  toast(ok + (ok === 1 ? ' fatura importada.' : ' faturas importadas.'));
+}
+
+/* ============ início ============ */
+carregar(); render();
+if('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
